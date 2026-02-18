@@ -32,6 +32,8 @@ components/
   ui/                 # Componentes reutilizáveis
 lib/
   utils.ts
+  auth.ts             # Configuração better-auth (server)
+  auth-client.ts      # Cliente React better-auth
 server/
   database/
     index.ts          # Conexão com Neon
@@ -39,6 +41,9 @@ server/
   repositories/       # Acesso a dados
   services/           # Lógica de negócio
   actions/            # Server Actions
+  types/
+    index.ts          # Único ponto de exportação de tipos
+proxy.ts              # Proteção de rotas (substitui middleware no Next.js 16)
 ```
 
 ---
@@ -259,6 +264,8 @@ server/
   actions/
     user-actions.ts
     product-actions.ts
+  types/
+    index.ts              # Único ponto de exportação de tipos
 ```
 
 ### Conexão com Neon
@@ -275,6 +282,8 @@ export const db = drizzle({ client: sql, schema })
 
 ### Definição de Schema (Drizzle)
 
+O schema define apenas as tabelas. **Nenhum `type` deve ser declarado no schema.**
+
 ```tsx
 import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core'
 
@@ -287,32 +296,50 @@ export const usersTable = pgTable('users', {
     .notNull()
     .$onUpdate(() => new Date()),
 })
+```
+
+### Tipos Centralizados (server/types/index.ts)
+
+Todos os tipos derivados do schema devem ser declarados **exclusivamente** em `server/types/index.ts`. Nunca declarar tipos dentro dos arquivos de schema ou repositories.
+
+```tsx
+import type { usersTable, productsTable } from '@/server/database/schema'
 
 export type User = typeof usersTable.$inferSelect
 export type NewUser = typeof usersTable.$inferInsert
+
+export type Product = typeof productsTable.$inferSelect
+export type NewProduct = typeof productsTable.$inferInsert
+```
+
+Importar sempre de `@/server/types`:
+
+```tsx
+import type { User, NewUser } from '@/server/types'
 ```
 
 ### Tipagem com drizzle-zod
 
-Sempre inferir tipos diretamente do schema usando drizzle-zod:
+Os schemas Zod e seus tipos derivados também ficam em `server/types/index.ts`:
 
 ```tsx
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
-import { usersTable } from '../database/schema'
+import { usersTable } from '@/server/database/schema'
 
 export const insertUserSchema = createInsertSchema(usersTable)
 export const selectUserSchema = createSelectSchema(usersTable)
 
-export type InsertUser = typeof insertUserSchema._type
-export type SelectUser = typeof selectUserSchema._type
+export type User = typeof selectUserSchema._type
+export type NewUser = typeof insertUserSchema._type
 ```
 
 ### Repository Pattern
 
 ```tsx
 import { eq } from 'drizzle-orm'
-import { db } from '../database'
-import { usersTable, type NewUser, type User } from '../database/schema'
+import { db } from '@/server/database'
+import { usersTable } from '@/server/database/schema'
+import type { NewUser, User } from '@/server/types'
 
 export const userRepository = {
   async findAll(): Promise<User[]> {
@@ -350,9 +377,9 @@ export const userRepository = {
 ### Service Layer
 
 ```tsx
-import { userRepository } from '../repositories/user-repository'
-import { insertUserSchema } from '../database/schema/users'
-import type { NewUser, User } from '../database/schema'
+import { userRepository } from '@/server/repositories/user-repository'
+import { insertUserSchema } from '@/server/types'
+import type { NewUser, User } from '@/server/types'
 
 export const userService = {
   async getAll(): Promise<User[]> {
@@ -399,23 +426,29 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost'
 
 ### 2. Inferência de Tipos do Schema
 
-SEMPRE inferir tipos diretamente do schema Drizzle:
+Tipos são **sempre** declarados em `server/types/index.ts`, inferidos do schema Drizzle. Nunca declarar `type` dentro de arquivos de schema, repository ou service.
 
 ```tsx
-import { usersTable } from '@/server/database/schema'
+import type { usersTable } from '@/server/database/schema'
 
-type User = typeof usersTable.$inferSelect
-type NewUser = typeof usersTable.$inferInsert
+export type User = typeof usersTable.$inferSelect
+export type NewUser = typeof usersTable.$inferInsert
 ```
 
-Para validação com Zod:
+Importar sempre de `@/server/types`, nunca diretamente do schema:
+
+```tsx
+import type { User, NewUser } from '@/server/types'
+```
+
+Para validação com Zod, os schemas também ficam em `server/types/index.ts`:
 
 ```tsx
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod'
 import { usersTable } from '@/server/database/schema'
 
-const insertUserSchema = createInsertSchema(usersTable)
-const selectUserSchema = createSelectSchema(usersTable)
+export const insertUserSchema = createInsertSchema(usersTable)
+export const selectUserSchema = createSelectSchema(usersTable)
 ```
 
 ---
@@ -517,6 +550,8 @@ Antes de finalizar qualquer código, verificar:
 - [ ] Lógica de backend dentro de `server/`
 - [ ] Types ao invés de interfaces
 - [ ] Tipos inferidos do schema Drizzle
+- [ ] Tipos declarados exclusivamente em `server/types/index.ts`
+- [ ] Importações de types sempre via `@/server/types`
 - [ ] Testes unitários para services
 - [ ] Código sem comentários
 - [ ] Validação com drizzle-zod
