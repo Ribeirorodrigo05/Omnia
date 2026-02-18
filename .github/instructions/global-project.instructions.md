@@ -43,6 +43,9 @@ server/
   actions/            # Server Actions
   types/
     index.ts          # Único ponto de exportação de tipos
+validators/
+  index.ts            # Re-export de todos os validators
+  sign-up.ts          # Exemplo: schema Zod + type inferido
 proxy.ts              # Proteção de rotas (substitui middleware no Next.js 16)
 ```
 
@@ -540,6 +543,42 @@ describe('userService', () => {
 
 ---
 
+## Validators (pasta validators/)
+
+Todas as validações Zod de formulários devem ser declaradas na pasta `validators/`. Cada arquivo agrupa schemas e tipos de uma entidade/feature.
+
+**Regras obrigatórias:**
+- Schema Zod e o `type` inferido (`z.infer`) ficam **no mesmo arquivo** dentro de `validators/`
+- Nunca declarar schemas Zod ou `type z.infer` dentro de componentes
+- Exportar tudo via `validators/index.ts`
+- Importar sempre de `@/validators`
+
+```tsx
+import { z } from 'zod'
+
+export const signUpSchema = z.object({
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
+})
+
+export type SignUpFormData = z.infer<typeof signUpSchema>
+```
+
+```tsx
+export * from './sign-up'
+```
+
+Importar no componente:
+
+```tsx
+import { signUpSchema, type SignUpFormData } from '@/validators'
+```
+
+> **Atenção**: tipos inferidos de schemas Drizzle pertencem a `server/types/index.ts`. Tipos inferidos de schemas Zod de formulários pertencem a `validators/<feature>.ts`.
+
+---
+
 ## Checklist de Revisão
 
 Antes de finalizar qualquer código, verificar:
@@ -552,6 +591,9 @@ Antes de finalizar qualquer código, verificar:
 - [ ] Tipos inferidos do schema Drizzle
 - [ ] Tipos declarados exclusivamente em `server/types/index.ts`
 - [ ] Importações de types sempre via `@/server/types`
+- [ ] Schemas Zod de formulários em `validators/<feature>.ts`
+- [ ] Types `z.infer` declarados junto ao schema em `validators/<feature>.ts`
+- [ ] Importações de validators sempre via `@/validators`
 - [ ] Testes unitários para services
 - [ ] Código sem comentários
 - [ ] Validação com drizzle-zod
