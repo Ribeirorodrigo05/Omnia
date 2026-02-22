@@ -3,7 +3,26 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images:{
-    domains: ['drive.google.com', 'i.ibb.co', 'gemini.google.com'] // Adicione os domínios das imagens que você deseja permitir,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'drive.google.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ibb.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'gemini.google.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
   }
 };
 
