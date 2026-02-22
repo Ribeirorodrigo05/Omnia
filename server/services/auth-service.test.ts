@@ -5,11 +5,16 @@ vi.mock('@/lib/auth', () => ({
   auth: {
     api: {
       signUpEmail: vi.fn(),
+      signInEmail: vi.fn(),
     },
   },
 }))
 
 vi.mock('server-only', () => ({}))
+
+vi.mock('next/headers', () => ({
+  headers: vi.fn().mockResolvedValue(new Headers()),
+}))
 
 import { auth } from '@/lib/auth'
 
@@ -64,6 +69,42 @@ describe('authService', () => {
     it('deve lançar erro com nome muito curto', async () => {
       await expect(
         authService.signUp({ ...validInput, name: 'A' })
+      ).rejects.toThrow()
+    })
+  })
+
+  describe('signIn', () => {
+    const validInput = {
+      email: 'ana@test.com',
+      password: 'senha1234',
+    }
+
+    it('deve autenticar usuário com dados válidos', async () => {
+      vi.mocked(auth.api.signInEmail).mockResolvedValue({ user: { id: '1' }, session: {} } as never)
+
+      const result = await authService.signIn(validInput)
+
+      expect(result).toEqual({ success: true })
+      expect(auth.api.signInEmail).toHaveBeenCalledOnce()
+    })
+
+    it('deve retornar erro quando credenciais forem inválidas', async () => {
+      vi.mocked(auth.api.signInEmail).mockRejectedValue(new Error('Invalid credentials'))
+
+      const result = await authService.signIn(validInput)
+
+      expect(result).toEqual({ error: 'Email ou senha incorretos.' })
+    })
+
+    it('deve lançar erro com email inválido', async () => {
+      await expect(
+        authService.signIn({ ...validInput, email: 'email-invalido' })
+      ).rejects.toThrow()
+    })
+
+    it('deve lançar erro com senha vazia', async () => {
+      await expect(
+        authService.signIn({ ...validInput, password: '' })
       ).rejects.toThrow()
     })
   })

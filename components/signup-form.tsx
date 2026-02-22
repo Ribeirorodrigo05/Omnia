@@ -116,6 +116,12 @@ export function SignupForm({
           <Button type="submit" disabled={!isValid || isSubmitting}>
             {isSubmitting ? 'Criando conta...' : 'Criar conta'}
           </Button>
+          <FieldDescription className="text-center">
+            Já tem uma conta?{' '}
+            <Link href="/sign-in" className="underline underline-offset-4">
+              Entrar
+            </Link>
+          </FieldDescription>
         </Field>
       </FieldGroup>
     </form>

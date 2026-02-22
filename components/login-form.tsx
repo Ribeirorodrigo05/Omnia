@@ -1,69 +1,107 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+'use client'
+
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import Link from 'next/link'
+
+import { signInAction } from '@/server/actions/auth-actions'
+import { signInSchema, type SignInFormData } from '@/validators'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<"div">) {
+}: React.ComponentProps<'form'>) {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting, isValid },
+  } = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema),
+    mode: 'onChange',
+  })
+
+  async function onSubmit(data: SignInFormData) {
+    const result = await signInAction(data)
+    if (result?.error) {
+      setError('root', { message: result.error })
+    }
+  }
+
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
-            <FieldGroup>
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
-                <p className="text-muted-foreground text-balance">
-                  Login to your Omnia account
-                </p>
-              </div>
-              <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                />
-              </Field>
-              <Field>
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
-                <Input id="password" type="password" required />
-              </Field>
-              <Field>
-                <Button type="submit">Login</Button>
-              </Field>
-              <FieldDescription className="text-center">
-                Don&apos;t have an account? <a href="#">Sign up</a>
-              </FieldDescription>
-            </FieldGroup>
-          </form>
-          <div className="bg-muted relative hidden md:block">
-            <img
-              src="/placeholder.svg"
-              alt="Image"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-            />
+    <form
+      className={cn('flex flex-col gap-6', className)}
+      onSubmit={handleSubmit(onSubmit)}
+      noValidate
+      {...props}
+    >
+      <FieldGroup>
+        <div className="flex flex-col items-center gap-1 text-center">
+          <h1 className="text-2xl font-bold">Entrar na sua conta</h1>
+          <p className="text-muted-foreground text-sm text-balance">
+            Preencha seus dados abaixo para acessar sua conta
+          </p>
+        </div>
+
+        <Field data-invalid={!!errors.email}>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            placeholder="joao@exemplo.com"
+            autoComplete="email"
+            aria-invalid={!!errors.email}
+            {...register('email')}
+          />
+          {errors.email && <FieldError>{errors.email.message}</FieldError>}
+        </Field>
+
+        <Field data-invalid={!!errors.password}>
+          <div className="flex items-center">
+            <FieldLabel htmlFor="password">Senha</FieldLabel>
+            <Link
+              href="#"
+              className="ml-auto text-sm underline-offset-4 hover:underline"
+            >
+              Esqueceu sua senha?
+            </Link>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Input
+            id="password"
+            type="password"
+            autoComplete="current-password"
+            aria-invalid={!!errors.password}
+            {...register('password')}
+          />
+          {errors.password && <FieldError>{errors.password.message}</FieldError>}
+        </Field>
+
+        {errors.root && (
+          <p className="text-destructive text-sm text-center">{errors.root.message}</p>
+        )}
+
+        <Field>
+          <Button type="submit" disabled={!isValid || isSubmitting}>
+            {isSubmitting ? 'Entrando...' : 'Entrar'}
+          </Button>
+          <FieldDescription className="text-center">
+            Não tem uma conta?{' '}
+            <Link href="/sign-up" className="underline underline-offset-4">
+              Criar conta
+            </Link>
+          </FieldDescription>
+        </Field>
+      </FieldGroup>
+    </form>
   )
 }

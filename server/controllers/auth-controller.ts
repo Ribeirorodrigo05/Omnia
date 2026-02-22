@@ -1,10 +1,14 @@
 import 'server-only'
 
 import { authService } from '@/server/services/auth-service'
-import type { SignUpFormData } from '@/validators'
+import type { SignUpFormData, SignInFormData } from '@/validators'
 
 export const authController = {
   async signUp(data: SignUpFormData) {
     return authService.signUp(data)
+  },
+
+  async signIn(data: SignInFormData) {
+    return authService.signIn(data)
   },
 }
