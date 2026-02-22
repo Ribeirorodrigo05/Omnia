@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import Link from 'next/link'
 
+import { signUpAction } from '@/server/actions/auth-actions'
 import { signUpSchema, type SignUpFormData } from '@/validators'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -24,13 +25,19 @@ export function SignupForm({
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting, isValid },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     mode: 'onChange',
   })
 
-  function onSubmit(_data: SignUpFormData) {}
+  async function onSubmit(data: SignUpFormData) {
+    const result = await signUpAction(data)
+    if (result?.error) {
+      setError('root', { message: result.error })
+    }
+  }
 
   return (
     <form
@@ -100,6 +107,10 @@ export function SignupForm({
             <FieldError>{errors.confirmPassword.message}</FieldError>
           )}
         </Field>
+
+        {errors.root && (
+          <p className="text-destructive text-sm text-center">{errors.root.message}</p>
+        )}
 
         <Field>
           <Button type="submit" disabled={!isValid || isSubmitting}>

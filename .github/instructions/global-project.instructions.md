@@ -38,6 +38,7 @@ server/
   database/
     index.ts          # Conexão com Neon
     schema/           # Definições de tabelas Drizzle
+  controllers/        # Autenticação e autorização
   repositories/       # Acesso a dados
   services/           # Lógica de negócio
   actions/            # Server Actions
@@ -258,6 +259,9 @@ server/
       users.ts
       products.ts
       index.ts            # Re-export de todos schemas
+  controllers/
+    user-controller.ts
+    product-controller.ts
   repositories/
     user-repository.ts
     product-repository.ts
@@ -270,6 +274,28 @@ server/
   types/
     index.ts              # Único ponto de exportação de tipos
 ```
+
+### Arquitetura em Camadas
+
+**Leitura** (Server Components):
+```
+Server Component → service → repository → database
+```
+
+**Escrita** (mutations via Server Actions):
+```
+action → controller → service → repository → database
+```
+
+### Import `server-only` Obrigatório
+
+Controllers, services e repositories devem sempre importar `server-only` no topo do arquivo para garantir que nunca sejam executados no cliente:
+
+```ts
+import 'server-only'
+```
+
+Actions devem usar `'use server'` no topo do arquivo.
 
 ### Conexão com Neon
 
@@ -595,5 +621,7 @@ Antes de finalizar qualquer código, verificar:
 - [ ] Types `z.infer` declarados junto ao schema em `validators/<feature>.ts`
 - [ ] Importações de validators sempre via `@/validators`
 - [ ] Testes unitários para services
+- [ ] `import 'server-only'` em controllers, services e repositories
+- [ ] `'use server'` em actions
 - [ ] Código sem comentários
 - [ ] Validação com drizzle-zod
