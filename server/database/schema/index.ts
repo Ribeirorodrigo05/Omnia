@@ -1,4 +1,6 @@
 export * from './auth'
 export * from './workspace'
 export * from './workspace-users'
+export * from './space'
+export * from './space-users'
 export * from './relations'

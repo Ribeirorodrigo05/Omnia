@@ -1,6 +1,4 @@
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { AppSidebar } from '@/components/app-sidebar'
 import { DashboardHeader } from '@/components/dashboard/dashboard-header'
 import { MetricsCards } from '@/components/dashboard/metrics-cards'
 import { SprintProgress } from '@/components/dashboard/sprint-progress'
@@ -12,12 +10,10 @@ import { WeeklyActivity } from '@/components/dashboard/weekly-activity'
 
 export default function HomePage() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <DashboardHeader />
-        <ScrollArea className="flex-1">
-          <div className="p-4 lg:p-6 space-y-6">
+    <>
+      <DashboardHeader />
+      <ScrollArea className="flex-1">
+        <div className="p-4 lg:p-6 space-y-6">
             <div>
               <h2 className="text-xl font-semibold text-foreground tracking-tight text-balance">
                 Bem-vindo de volta
@@ -41,9 +37,8 @@ export default function HomePage() {
               <TeamWorkload />
               <UpcomingDeadlines />
             </div>
-          </div>
-        </ScrollArea>
-      </SidebarInset>
-    </SidebarProvider>
+        </div>
+      </ScrollArea>
+    </>
   )
 }
