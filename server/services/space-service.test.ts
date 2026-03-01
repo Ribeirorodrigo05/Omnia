@@ -12,6 +12,7 @@ vi.mock('../repositories/space-users-repository')
 const mockSpace: Space = {
   id: 'space-1',
   name: 'Frontend',
+  icon: 'folder-kanban',
   workspaceId: 'ws-1',
   creatorId: 'user-1',
   createdAt: new Date(),
@@ -61,6 +62,25 @@ describe('spaceService', () => {
 
       expect(result).toEqual([mockSpace])
       expect(spaceRepository.findByWorkspaceId).toHaveBeenCalledWith('ws-1')
+    })
+  })
+
+  describe('getByUserId', () => {
+    it('deve retornar todos os spaces do usuário', async () => {
+      vi.mocked(spaceRepository.findByUserId).mockResolvedValue([mockSpace])
+
+      const result = await spaceService.getByUserId('user-1')
+
+      expect(result).toEqual([mockSpace])
+      expect(spaceRepository.findByUserId).toHaveBeenCalledWith('user-1')
+    })
+
+    it('deve retornar lista vazia quando o usuário não possui spaces', async () => {
+      vi.mocked(spaceRepository.findByUserId).mockResolvedValue([])
+
+      const result = await spaceService.getByUserId('user-1')
+
+      expect(result).toEqual([])
     })
   })
 

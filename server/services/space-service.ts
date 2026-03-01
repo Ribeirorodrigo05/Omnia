@@ -14,6 +14,10 @@ export const spaceService = {
     return spaceRepository.findByWorkspaceId(workspaceId)
   },
 
+  async getByUserId(userId: string): Promise<Space[]> {
+    return spaceRepository.findByUserId(userId)
+  },
+
   async create(data: unknown, creatorId: string): Promise<Space> {
     const validated = insertSpaceSchema
       .pick({ name: true, workspaceId: true })
@@ -35,7 +39,7 @@ export const spaceService = {
   },
 
   async update(id: Space['id'], data: unknown): Promise<Space | undefined> {
-    const validated = insertSpaceSchema.pick({ name: true }).partial().parse(data)
+    const validated = insertSpaceSchema.pick({ name: true, icon: true }).partial().parse(data)
     return spaceRepository.update(id, validated)
   },
 

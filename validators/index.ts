@@ -1,3 +1,5 @@
 export * from './sign-up'
 export * from './sign-in'
 export * from './workspace'
+export * from './space'
+export * from './category'

@@ -5,6 +5,7 @@ import { workspacesTable } from './workspace'
 import { workspaceUsersTable } from './workspace-users'
 import { spacesTable } from './space'
 import { spaceUsersTable } from './space-users'
+import { categoriesTable } from './category'
 
 export const workspacesRelations = relations(workspacesTable, ({ one, many }) => ({
   owner: one(user, {
@@ -19,6 +20,7 @@ export const usersRelations = relations(user, ({ many }) => ({
   workspaces: many(workspacesTable),
   workspaceUsers: many(workspaceUsersTable),
   spaceUsers: many(spaceUsersTable),
+  categories: many(categoriesTable),
 }))
 
 export const workspaceUsersRelations = relations(workspaceUsersTable, ({ one }) => ({
@@ -42,6 +44,7 @@ export const spacesRelations = relations(spacesTable, ({ one, many }) => ({
     references: [user.id],
   }),
   members: many(spaceUsersTable),
+  categories: many(categoriesTable),
 }))
 
 export const spaceUsersRelations = relations(spaceUsersTable, ({ one }) => ({
@@ -51,6 +54,17 @@ export const spaceUsersRelations = relations(spaceUsersTable, ({ one }) => ({
   }),
   user: one(user, {
     fields: [spaceUsersTable.userId],
+    references: [user.id],
+  }),
+}))
+
+export const categoriesRelations = relations(categoriesTable, ({ one }) => ({
+  space: one(spacesTable, {
+    fields: [categoriesTable.spaceId],
+    references: [spacesTable.id],
+  }),
+  creator: one(user, {
+    fields: [categoriesTable.creatorId],
     references: [user.id],
   }),
 }))

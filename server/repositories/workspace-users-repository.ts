@@ -19,6 +19,13 @@ export const workspaceUsersRepository = {
       .where(eq(workspaceUsersTable.userId, userId))
   },
 
+  async findFullByUserId(userId: WorkspaceUser['userId']): Promise<WorkspaceUser[]> {
+    return db
+      .select()
+      .from(workspaceUsersTable)
+      .where(eq(workspaceUsersTable.userId, userId))
+  },
+
   async create(data: NewWorkspaceUser): Promise<WorkspaceUser> {
     const [workspaceUser] = await db
       .insert(workspaceUsersTable)

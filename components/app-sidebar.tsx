@@ -7,24 +7,34 @@ import {
   Plus,
   Search,
   LayoutDashboard,
-  FolderKanban,
   ListTodo,
   Calendar,
-  Target,
   Users,
   Settings,
   LogOut,
   Bell,
   ChevronsUpDown,
-  Sparkles,
-  CircleDot,
-  FileText,
-  Clock,
-  Hash,
+  MoreHorizontal,
+  Pencil,
+  Shield,
+  Trash2,
+  FolderPlus,
+  List,
+  Rocket,
 } from 'lucide-react'
+
+import type { LucideIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { signOut } from '@/lib/auth-client'
+import { CreateSpaceInlineForm } from '@/components/create-space-inline-form'
+import { RenameSpaceDialog } from '@/components/rename-space-dialog'
+import { DeleteSpaceDialog } from '@/components/delete-space-dialog'
+import { CreateCategoryDialog } from '@/components/create-category-dialog'
+import { SpaceIconPicker } from '@/components/space-icon-picker'
+import { CategoryIconPicker } from '@/components/category-icon-picker'
+import type { Space, Category } from '@/server/types'
+import type { CategoryType } from '@/validators'
 import {
   Sidebar,
   SidebarContent,
@@ -34,6 +44,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -53,83 +64,13 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-
-const workspaces = [
-  {
-    name: 'Product Team',
-    emoji: 'P',
-    color: 'bg-primary',
-    spaces: [
-      {
-        name: 'Sprint Backlog',
-        icon: ListTodo,
-        items: [
-          { name: 'User Stories', icon: FileText },
-          { name: 'Bug Fixes', icon: CircleDot },
-          { name: 'Tech Debt', icon: Clock },
-        ],
-      },
-      {
-        name: 'Roadmap',
-        icon: Target,
-        items: [
-          { name: 'Q1 2026', icon: Hash },
-          { name: 'Q2 2026', icon: Hash },
-        ],
-      },
-      {
-        name: 'Design System',
-        icon: Sparkles,
-        items: [
-          { name: 'Components', icon: Hash },
-          { name: 'Tokens', icon: Hash },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'Marketing',
-    emoji: 'M',
-    color: 'bg-chart-2',
-    spaces: [
-      {
-        name: 'Campaigns',
-        icon: FolderKanban,
-        items: [
-          { name: 'Social Media', icon: Hash },
-          { name: 'Email Flows', icon: Hash },
-        ],
-      },
-      {
-        name: 'Content Calendar',
-        icon: Calendar,
-        items: [
-          { name: 'Blog Posts', icon: FileText },
-          { name: 'Video Scripts', icon: FileText },
-        ],
-      },
-    ],
-  },
-  {
-    name: 'Engineering',
-    emoji: 'E',
-    color: 'bg-chart-3',
-    spaces: [
-      {
-        name: 'Infrastructure',
-        icon: Settings,
-        items: [
-          { name: 'CI/CD', icon: Hash },
-          { name: 'Monitoring', icon: Hash },
-        ],
-      },
-    ],
-  },
-]
 
 const quickLinks = [
   { name: 'Dashboard', icon: LayoutDashboard, active: true },
@@ -138,14 +79,58 @@ const quickLinks = [
   { name: 'Membros', icon: Users },
 ]
 
-export function AppSidebar() {
+type SpaceMenuAction = 'rename' | 'create' | 'permission' | 'delete'
+
+type SpaceMenuItem =
+  | { type: 'item'; label: string; icon: LucideIcon; action: SpaceMenuAction; destructive?: boolean }
+  | { type: 'submenu'; label: string; icon: LucideIcon }
+  | { type: 'separator' }
+
+const createSubMenuItems: { label: string; icon: typeof FolderPlus; categoryType: CategoryType }[] = [
+  { label: 'Pasta', icon: FolderPlus, categoryType: 'folder' },
+  { label: 'Lista', icon: List, categoryType: 'list' },
+  { label: 'Iniciativa', icon: Rocket, categoryType: 'initiative' },
+]
+
+const spaceMenuItems: SpaceMenuItem[] = [
+  { type: 'item', label: 'Renomear', icon: Pencil, action: 'rename' },
+  { type: 'submenu', label: 'Criar', icon: Plus },
+  { type: 'item', label: 'Permissão', icon: Shield, action: 'permission' },
+  { type: 'separator' },
+  { type: 'item', label: 'Deletar', icon: Trash2, action: 'delete', destructive: true },
+]
+
+type AppSidebarProps = {
+  spaces: Space[]
+  categoriesBySpace: Record<string, Category[]>
+  canCreateSpace: boolean
+  workspaceId: string
+}
+
+export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspaceId }: AppSidebarProps) {
   const router = useRouter()
-  const [openSpaces, setOpenSpaces] = React.useState<Record<string, boolean>>({
-    'Sprint Backlog': true,
-  })
+  const [openSpaces, setOpenSpaces] = React.useState<Record<string, boolean>>({})
+  const [isCreating, setIsCreating] = React.useState(false)
+  const [renameTarget, setRenameTarget] = React.useState<Space | null>(null)
+  const [deleteTarget, setDeleteTarget] = React.useState<Space | null>(null)
+  const [createCategoryTarget, setCreateCategoryTarget] = React.useState<{ space: Space; type: CategoryType } | null>(null)
+
+  function handleSpaceMenuAction(action: SpaceMenuAction, space: Space) {
+    const actions: Record<SpaceMenuAction, () => void> = {
+      rename: () => setRenameTarget(space),
+      create: () => {},
+      permission: () => {},
+      delete: () => setDeleteTarget(space),
+    }
+    actions[action]()
+  }
 
   const toggleSpace = (name: string) => {
     setOpenSpaces((prev) => ({ ...prev, [name]: !prev[name] }))
+  }
+
+  function handleCreateSpace() {
+    setIsCreating(false)
   }
 
   async function handleSignOut() {
@@ -202,7 +187,7 @@ export function AppSidebar() {
         </SidebarMenu>
 
         <div className="px-2 pt-2">
-          <button className="flex w-full items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent transition-colors">
+          <button className="flex w-full items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent transition-colors cursor-pointer">
             <Search className="size-4" />
             <span>Buscar...</span>
             <kbd className="ml-auto inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
@@ -241,62 +226,151 @@ export function AppSidebar() {
 
         <SidebarSeparator />
 
-        {workspaces.map((workspace) => (
-          <SidebarGroup key={workspace.name}>
-            <SidebarGroupLabel className="uppercase tracking-wider text-[11px]">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'flex size-4 items-center justify-center rounded text-[9px] font-bold text-primary-foreground',
-                    workspace.color
-                  )}
-                >
-                  {workspace.emoji}
-                </div>
-                <span>{workspace.name}</span>
-              </div>
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {workspace.spaces.map((space) => (
+        <SidebarGroup>
+          <SidebarGroupLabel className="uppercase tracking-wider text-[11px]">
+            Espaços
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {spaces.map((space) => (
                   <Collapsible
-                    key={space.name}
-                    open={openSpaces[space.name] ?? false}
-                    onOpenChange={() => toggleSpace(space.name)}
+                    key={space.id}
+                    open={openSpaces[space.id] ?? false}
+                    onOpenChange={() => toggleSpace(space.id)}
                   >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
                         <SidebarMenuButton tooltip={space.name}>
-                          <space.icon className="size-4" />
+                          <SpaceIconPicker spaceId={space.id} currentIcon={space.icon} />
                           <span>{space.name}</span>
                           <ChevronRight
                             className={cn(
                               'ml-auto size-4 transition-transform duration-200',
-                              openSpaces[space.name] && 'rotate-90'
+                              openSpaces[space.id] && 'rotate-90'
                             )}
                           />
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <SidebarMenuAction showOnHover>
+                            <MoreHorizontal className="size-4" />
+                          </SidebarMenuAction>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          side="right"
+                          align="start"
+                          className="w-48"
+                          onCloseAutoFocus={(e) => e.preventDefault()}
+                        >
+                          {spaceMenuItems.map((item, index) => {
+                            if (item.type === 'separator') {
+                              return <DropdownMenuSeparator key={`sep-${index}`} />
+                            }
+
+                            if (item.type === 'submenu') {
+                              return (
+                                <DropdownMenuSub key={item.label}>
+                                  <DropdownMenuSubTrigger>
+                                    <item.icon className="size-4" />
+                                    <span>{item.label}</span>
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    {createSubMenuItems.map((subItem) => (
+                                      <DropdownMenuItem
+                                        key={subItem.label}
+                                        onClick={() => {
+                                          setCreateCategoryTarget({ space, type: subItem.categoryType })
+                                        }}
+                                      >
+                                        <subItem.icon className="size-4" />
+                                        <span>{subItem.label}</span>
+                                      </DropdownMenuItem>
+                                    ))}
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                              )
+                            }
+
+                            return (
+                              <DropdownMenuItem
+                                key={item.label}
+                                className={cn(
+                                  item.destructive && 'text-destructive focus:text-destructive'
+                                )}
+                                onClick={() => handleSpaceMenuAction(item.action, space)}
+                              >
+                                <item.icon className="size-4" />
+                                <span>{item.label}</span>
+                              </DropdownMenuItem>
+                            )
+                          })}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <CollapsibleContent>
                         <SidebarMenuSub>
-                          {space.items.map((item) => (
-                            <SidebarMenuSubItem key={item.name}>
-                              <SidebarMenuSubButton>
-                                <item.icon className="size-3.5" />
-                                <span>{item.name}</span>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
+                          {(categoriesBySpace[space.id] ?? []).map((category) => (
+                              <SidebarMenuSubItem key={category.id}>
+                                <SidebarMenuSubButton>
+                                  <CategoryIconPicker
+                                    categoryId={category.id}
+                                    currentIcon={category.icon}
+                                  />
+                                  <span>{category.name}</span>
+                                </SidebarMenuSubButton>
+                              </SidebarMenuSubItem>
+                            )
+                          )}
                         </SidebarMenuSub>
                       </CollapsibleContent>
                     </SidebarMenuItem>
                   </Collapsible>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+              ))}
+              {canCreateSpace && (
+                <SidebarMenuItem>
+                  {isCreating ? (
+                    <CreateSpaceInlineForm
+                      workspaceId={workspaceId}
+                      onSuccess={handleCreateSpace}
+                      onCancel={() => setIsCreating(false)}
+                    />
+                  ) : (
+                    <SidebarMenuButton
+                      tooltip="Criar Espaço"
+                      onClick={() => setIsCreating(true)}
+                    >
+                      <Plus className="size-4" />
+                      <span>Criar Espaço</span>
+                    </SidebarMenuButton>
+                  )}
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
+
+      <RenameSpaceDialog
+        open={renameTarget !== null}
+        onOpenChange={(open) => { if (!open) setRenameTarget(null) }}
+        spaceId={renameTarget?.id ?? ''}
+        currentName={renameTarget?.name ?? ''}
+      />
+
+      <DeleteSpaceDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}
+        spaceId={deleteTarget?.id ?? ''}
+        spaceName={deleteTarget?.name ?? ''}
+      />
+
+      <CreateCategoryDialog
+        open={createCategoryTarget !== null}
+        onOpenChange={(open) => { if (!open) setCreateCategoryTarget(null) }}
+        spaceId={createCategoryTarget?.space.id ?? ''}
+        spaceName={createCategoryTarget?.space.name ?? ''}
+        type={createCategoryTarget?.type ?? 'folder'}
+      />
 
       <SidebarSeparator />
 

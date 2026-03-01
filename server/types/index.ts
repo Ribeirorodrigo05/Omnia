@@ -1,6 +1,7 @@
 import { createInsertSchema } from 'drizzle-zod'
 
 import {
+  categoriesTable,
   spacesTable,
   spaceUsersTable,
   workspacesTable,
@@ -32,7 +33,11 @@ export type NewSpace = typeof spacesTable.$inferInsert
 export type SpaceUser = typeof spaceUsersTable.$inferSelect
 export type NewSpaceUser = typeof spaceUsersTable.$inferInsert
 
+export type Category = typeof categoriesTable.$inferSelect
+export type NewCategory = typeof categoriesTable.$inferInsert
+
 export const insertWorkspaceSchema = createInsertSchema(workspacesTable)
 export const insertWorkspaceUserSchema = createInsertSchema(workspaceUsersTable)
 export const insertSpaceSchema = createInsertSchema(spacesTable)
 export const insertSpaceUserSchema = createInsertSchema(spaceUsersTable)
+export const insertCategorySchema = createInsertSchema(categoriesTable)

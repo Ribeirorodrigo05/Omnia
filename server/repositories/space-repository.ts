@@ -1,9 +1,9 @@
 import 'server-only'
 
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, inArray } from 'drizzle-orm'
 
 import { db } from '@/server/database'
-import { spacesTable } from '@/server/database/schema'
+import { spacesTable, spaceUsersTable } from '@/server/database/schema'
 import type { NewSpace, Space } from '@/server/types'
 
 export const spaceRepository = {
@@ -21,6 +21,22 @@ export const spaceRepository = {
       .from(spacesTable)
       .where(
         and(eq(spacesTable.workspaceId, workspaceId), isNull(spacesTable.deletedAt))
+      )
+  },
+
+  async findByUserId(userId: string): Promise<Space[]> {
+    const memberSpaceIds = db
+      .select({ spaceId: spaceUsersTable.spaceId })
+      .from(spaceUsersTable)
+      .where(
+        and(eq(spaceUsersTable.userId, userId), isNull(spaceUsersTable.deletedAt))
+      )
+
+    return db
+      .select()
+      .from(spacesTable)
+      .where(
+        and(inArray(spacesTable.id, memberSpaceIds), isNull(spacesTable.deletedAt))
       )
   },
 

@@ -8,6 +8,7 @@ export const spacesTable = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 255 }).notNull(),
+    icon: varchar('icon', { length: 50 }).notNull().default('folder-kanban'),
     workspaceId: uuid('workspace_id')
       .notNull()
       .references(() => workspacesTable.id, { onDelete: 'cascade' }),
