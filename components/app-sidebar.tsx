@@ -71,6 +71,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 
 const quickLinks = [
   { name: 'Dashboard', icon: LayoutDashboard, active: true },
@@ -312,7 +313,7 @@ export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspac
                         <SidebarMenuSub>
                           {(categoriesBySpace[space.id] ?? []).map((category) => (
                               <SidebarMenuSubItem key={category.id}>
-                                <SidebarMenuSubButton>
+                                <SidebarMenuSubButton href={`/${category.type}/${category.id}`}>
                                   <CategoryIconPicker
                                     categoryId={category.id}
                                     currentIcon={category.icon}
@@ -339,6 +340,7 @@ export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspac
                     <SidebarMenuButton
                       tooltip="Criar Espaço"
                       onClick={() => setIsCreating(true)}
+                      
                     >
                       <Plus className="size-4" />
                       <span>Criar Espaço</span>
