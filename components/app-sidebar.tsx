@@ -105,9 +105,12 @@ type AppSidebarProps = {
   categoriesBySpace: Record<string, Category[]>
   canCreateSpace: boolean
   workspaceId: string
+  workspaceName: string
+  userName: string
+  userEmail: string
 }
 
-export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspaceId }: AppSidebarProps) {
+export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspaceId, workspaceName = '', userName = '', userEmail = '' }: AppSidebarProps) {
   const router = useRouter()
   const [openSpaces, setOpenSpaces] = React.useState<Record<string, boolean>>({})
   const [isCreating, setIsCreating] = React.useState(false)
@@ -150,13 +153,11 @@ export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspac
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold text-sm">
-                    O
+                    {workspaceName.charAt(0).toUpperCase()}
                   </div>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Omnia</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      Pro Plan
-                    </span>
+                    <span className="truncate font-semibold">{workspaceName}</span>
+                    
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -172,9 +173,9 @@ export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspac
                 </DropdownMenuLabel>
                 <DropdownMenuItem>
                   <div className="flex size-6 items-center justify-center rounded bg-primary text-primary-foreground font-semibold text-xs">
-                    O
+                    {workspaceName.charAt(0).toUpperCase()}
                   </div>
-                  <span>Omnia</span>
+                  <span>{workspaceName}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
@@ -385,13 +386,13 @@ export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspac
                 >
                   <Avatar className="size-8">
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                      U
+                      {userName.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Usuário</span>
+                    <span className="truncate font-semibold">{userName}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      usuario@omnia.app
+                      {userEmail}
                     </span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
@@ -406,13 +407,13 @@ export function AppSidebar({ spaces, categoriesBySpace, canCreateSpace, workspac
                 <DropdownMenuLabel className="flex items-center gap-2 p-2">
                   <Avatar className="size-8">
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                      U
+                      {userName.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">Usuário</span>
+                    <span className="truncate font-semibold">{userName}</span>
                     <span className="truncate text-xs text-muted-foreground">
-                      usuario@omnia.app
+                      {userEmail}
                     </span>
                   </div>
                 </DropdownMenuLabel>

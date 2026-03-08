@@ -15,6 +15,10 @@ const createWorkspaceSchema = insertWorkspaceSchema
   })
 
 export const workspaceService = {
+  async getById(id: string): Promise<Workspace | undefined> {
+    return workspaceRepository.findById(id)
+  },
+
   async create(data: unknown, ownerId: string): Promise<Workspace> {
     const validated = createWorkspaceSchema.parse(data)
 

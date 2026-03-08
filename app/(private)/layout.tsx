@@ -3,11 +3,17 @@ import { headers } from 'next/headers'
 
 import { layoutGuard } from './layout-guard'
 import { workspaceUsersService } from '@/server/services/workspace-users-service'
+import { workspaceService } from '@/server/services/workspace-service'
 import { spaceService } from '@/server/services/space-service'
 import { categoryService } from '@/server/services/category-service'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/app-sidebar'
 import { Suspense } from 'react'
+
+async function getWorkspace(workspaceId?: string) {
+  if (!workspaceId) return undefined
+  return workspaceService.getById(workspaceId)
+}
 
 export default async function PrivateLayout({
   children,
@@ -32,9 +38,10 @@ export default async function PrivateLayout({
     workspaceUsersService.getMembership(session.user.id),
   ])
 
-  const categoriesBySpace = await categoryService.getBySpaceIds(
-    spaces.map((s) => s.id)
-  )
+  const [categoriesBySpace, workspace] = await Promise.all([
+    categoryService.getBySpaceIds(spaces.map((s) => s.id)),
+    getWorkspace(membership?.workspaceId),
+  ])
 
   return (
     <SidebarProvider>
@@ -44,6 +51,9 @@ export default async function PrivateLayout({
         categoriesBySpace={categoriesBySpace}
         canCreateSpace={canCreateSpace}
         workspaceId={membership?.workspaceId ?? ''}
+        workspaceName={workspace?.name ?? ''}
+        userName={session.user.name}
+        userEmail={session.user.email}
       />
       </Suspense>
       <SidebarInset>{children}</SidebarInset>
