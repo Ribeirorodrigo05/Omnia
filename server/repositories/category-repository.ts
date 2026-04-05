@@ -15,6 +15,15 @@ export const categoryRepository = {
     return category
   },
 
+  async findByFolderId(folderId: Category['id']): Promise<Category[]> {
+    return db
+      .select()
+      .from(categoriesTable)
+      .where(
+        and(eq(categoriesTable.folderId, folderId), isNull(categoriesTable.deletedAt))
+      )
+  },
+
   async findBySpaceId(spaceId: Category['spaceId']): Promise<Category[]> {
     return db
       .select()

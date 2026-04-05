@@ -54,6 +54,7 @@ type CreateCategoryDialogProps = {
   spaceId: string
   spaceName: string
   type: CategoryType
+  folderId?: string | null
 }
 
 export function CreateCategoryDialog({
@@ -62,6 +63,7 @@ export function CreateCategoryDialog({
   spaceId,
   spaceName,
   type,
+  folderId,
 }: CreateCategoryDialogProps) {
   const [name, setName] = React.useState('')
   const [isPending, setIsPending] = React.useState(false)
@@ -91,6 +93,7 @@ export function CreateCategoryDialog({
       spaceId,
       name: name.trim(),
       type,
+      folderId: folderId ?? null,
     })
 
     setIsPending(false)

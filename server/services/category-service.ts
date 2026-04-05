@@ -9,6 +9,10 @@ export const categoryService = {
     return categoryRepository.findById(id)
   },
 
+  async getByFolderId(folderId: Category['id']): Promise<Category[]> {
+    return categoryRepository.findByFolderId(folderId)
+  },
+
   async getBySpaceId(spaceId: Category['spaceId']): Promise<Category[]> {
     return categoryRepository.findBySpaceId(spaceId)
   },
@@ -27,7 +31,7 @@ export const categoryService = {
 
   async create(data: unknown, creatorId: string): Promise<Category> {
     const validated = insertCategorySchema
-      .pick({ name: true, type: true, spaceId: true, startedAt: true, endsAt: true })
+      .pick({ name: true, type: true, spaceId: true, startedAt: true, endsAt: true, folderId: true })
       .parse(data)
 
     return categoryRepository.create({

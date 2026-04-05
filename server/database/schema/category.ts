@@ -19,6 +19,7 @@ export const categoriesTable = pgTable(
     spaceId: uuid('space_id')
       .notNull()
       .references(() => spacesTable.id, { onDelete: 'cascade' }),
+    folderId: uuid('folder_id'),
     creatorId: text('creator_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
@@ -33,6 +34,7 @@ export const categoriesTable = pgTable(
   (table) => [
     index('categories_id_idx').on(table.id),
     index('categories_space_id_idx').on(table.spaceId),
+    index('categories_folder_id_idx').on(table.folderId),
     index('categories_creator_id_idx').on(table.creatorId),
     index('categories_type_idx').on(table.type),
   ]
