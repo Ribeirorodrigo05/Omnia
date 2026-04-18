@@ -1,5 +1,10 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Development Governance
+
+Project governance and mandatory engineering rules are defined in `.specify/memory/constitution.md`.
+All planning and implementation artifacts must comply with that constitution before merge.
+
 ## Getting Started
 
 First, run the development server:
